@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Analytics;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -12,10 +13,13 @@ public class PlayerMovement : MonoBehaviour
     private const float _jumpPower = 12.5f;
     private const float _airLerpSpeed = 7.5f; // za smoothanje player movementa v zraku
     private const float _fallMutliplier = 2.5f;
+    private const float _maxHP = 100f;
+    public float playerHP = _maxHP;
     private float defaultGravity;
     private Vector2 wallJumpPower = new Vector2(_jumpPower / 2, _jumpPower);
     private Rigidbody2D rb;
     private float horizontalInput;
+    [SerializeField] private Slider healthSlider;
 
     // Player States
     bool playerGrounded = false;
@@ -41,14 +45,27 @@ public class PlayerMovement : MonoBehaviour
     private const float _wallJumpDuration = 0.1f;
     private float wallJumpTimer;
 
+    // Knockback
+    private Vector2 knockbackPower = new Vector2(150f, 10f);
+    private const float _knockbackDuration = 0.2f; 
+    private float knockbackTimer;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale *= _fallMutliplier;
+
+        if (healthSlider == null)
+        {
+            healthSlider = FindAnyObjectByType<Slider>();
+        }
+
+        UpdateHealthUI();
     }
 
     void Update()
     {
+        knockbackTimer -= Time.deltaTime;
         playerGrounded = IsTouchingGround();
 
         horizontalInput = 0f;
@@ -151,7 +168,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (rb != null)
         {   
-            if (wallJumpTimer > 0f) return;
+            if (wallJumpTimer > 0f || knockbackTimer > 0f) return;
 
             float yVelocity = rb.linearVelocity.y;
 
@@ -168,7 +185,48 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Vizualno prikazovanje hitboxa v editorju
+    private void OnCollisionEnter2D(Collision2D other) {
+        if (other.collider.CompareTag("Enemy"))
+        {
+            DoKnockBack(other.transform);
+            DamagePlayer(10);
+        }
+    }
+
+    public void DamagePlayer(float damage = 1f)
+    {
+        playerHP = Mathf.Clamp(playerHP - damage, 0, _maxHP);
+        UpdateHealthUI();
+
+        if (playerHP <= 0)
+        {
+            Debug.Log("ded");
+        }
+    }
+
+    private void DoKnockBack(Transform enemy)
+    {
+        float knockbackDir = Mathf.Sign(transform.position.x - enemy.position.x);
+
+        rb.linearVelocity = new Vector2(knockbackDir * knockbackPower.x, knockbackPower.y);
+        knockbackTimer = _knockbackDuration;
+    }
+    
+
+    public void HealPlayer(float healAmount = 1f)
+    {
+        playerHP = Mathf.Clamp(playerHP + healAmount, 0, _maxHP);
+        UpdateHealthUI();
+    }
+
+    private void UpdateHealthUI()
+    {
+        if (healthSlider != null)
+        {
+            healthSlider.maxValue = _maxHP;
+            healthSlider.value = playerHP;
+        }
+    }
     private void OnDrawGizmos()
     {
         Gizmos.color = playerGrounded ? Color.green : Color.red;
