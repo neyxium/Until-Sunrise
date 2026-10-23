@@ -16,7 +16,7 @@ public class PlayerMovement : MonoBehaviour
     private const float _maxHP = 100f;
     public float playerHP = _maxHP;
     private float defaultGravity;
-    private Vector2 wallJumpPower = new Vector2(_jumpPower / 2, _jumpPower);
+    private Vector2 wallJumpPower = new Vector2(_jumpPower / 1.25f, _jumpPower);
     private Rigidbody2D rb;
     private float horizontalInput;
     [SerializeField] private Slider healthSlider;
@@ -31,7 +31,8 @@ public class PlayerMovement : MonoBehaviour
 
     // Raycasting
     const float _rayCastDist = 0.55f;
-    private Vector2 boxSize = new Vector2(0.9f, 0.1f);
+    private Vector2 boxSize = new Vector2(0.475f, 0.1f);
+    private Vector2 boxOffset = new Vector2(0.11f, 0f);
 
     // Jump Buffer
     private const float _jumpBufferTime = 0.1f;
@@ -47,7 +48,7 @@ public class PlayerMovement : MonoBehaviour
 
     // Knockback
     private Vector2 knockbackPower = new Vector2(150f, 10f);
-    private const float _knockbackDuration = 0.2f; 
+    private const float _knockbackDuration = 0.2f;
     private float knockbackTimer;
 
     void Start()
@@ -98,11 +99,17 @@ public class PlayerMovement : MonoBehaviour
         {
             transform.Translate(new Vector3(horizontalInput * _speed * Time.deltaTime, 0f, 0f));
         }
+
+        if(GameManger.Instance.elapseNight > 0.75f)
+        {
+            DamagePlayer(Time.deltaTime * (0.5f + GameManger.Instance.elapseNight) * 5);
+        }
     }
 
     private bool IsTouchingGround()
     {
-        RaycastHit2D hit = Physics2D.BoxCast(transform.position, boxSize, 0f, Vector2.down, _rayCastDist, groundLayer);
+        Vector2 origin = (Vector2)transform.position + boxOffset;
+        RaycastHit2D hit = Physics2D.BoxCast(origin, boxSize, 0f, Vector2.down, _rayCastDist, groundLayer);
         return hit.collider != null;
     }
 
@@ -143,6 +150,14 @@ public class PlayerMovement : MonoBehaviour
         {
             jumpBufferCounter -= Time.deltaTime;
         }
+        if (horizontalInput > 0f)
+        {
+            transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+        }
+        else if (horizontalInput < 0f)
+        {
+            transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+        }
     }
 
     private void DoJump()
@@ -167,7 +182,7 @@ public class PlayerMovement : MonoBehaviour
     void FixedUpdate()
     {
         if (rb != null)
-        {   
+        {
             if (wallJumpTimer > 0f || knockbackTimer > 0f) return;
 
             float yVelocity = rb.linearVelocity.y;
@@ -185,7 +200,8 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D other) {
+    private void OnCollisionEnter2D(Collision2D other)
+    {
         if (other.collider.CompareTag("Enemy"))
         {
             DoKnockBack(other.transform);
@@ -211,7 +227,7 @@ public class PlayerMovement : MonoBehaviour
         rb.linearVelocity = new Vector2(knockbackDir * knockbackPower.x, knockbackPower.y);
         knockbackTimer = _knockbackDuration;
     }
-    
+
 
     public void HealPlayer(float healAmount = 1f)
     {
@@ -230,7 +246,9 @@ public class PlayerMovement : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = playerGrounded ? Color.green : Color.red;
-        Vector3 boxPosition = transform.position + Vector3.down * _rayCastDist;
+
+        Vector3 boxPosition = transform.position + (Vector3)boxOffset + Vector3.down * _rayCastDist;
+
         Gizmos.DrawWireCube(boxPosition, boxSize);
     }
 }
