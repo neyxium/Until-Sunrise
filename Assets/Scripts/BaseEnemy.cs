@@ -11,8 +11,8 @@ public class BaseEnemy : MonoBehaviour
     private const float _maxJumpDelay = 7f;
 
     // Dash
-    private const float _dashPower = 15f;
-    private const float _dashDuration = 0.2f;
+    private const float _dashPower = 10f;
+    private const float _dashDuration = 0.25f;
     private const float _dashCooldown = 2f;
 
     private float dashTimer;
@@ -119,7 +119,8 @@ public class BaseEnemy : MonoBehaviour
         movingDirection = (int)direction;
         FlipSprite();
 
-        rb.linearVelocity = new Vector2(direction * _dashPower, rb.transform.position.y);
+        // Ohranimo trenutno vertikalno HITROST (prej je bila tu pomotoma pozicija Y)
+        rb.linearVelocity = new Vector2(direction * _dashPower, rb.linearVelocity.y);
     }
 
     private void OnDrawGizmosSelected()

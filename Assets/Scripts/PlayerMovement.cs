@@ -1,7 +1,4 @@
-using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Analytics;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -35,6 +32,14 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 boxSize = new Vector2(0.475f, 0.1f);
     private Vector2 boxOffset = new Vector2(0.11f, 0f);
 
+    // Dash
+    private const float _dashSpeed = 20f;      // hitrost med dashem
+    private const float _dashDuration = 0.15f; // koliko časa traja dash (20 * 0.15 = 3 enote)
+    private const float _dashDelay = 2.5f;     // cooldown med dashi
+    private float dashTimer;
+    private float dashCooldownTimer;
+    private bool isDashing = false;
+
     // Jump Buffer
     private const float _jumpBufferTime = 0.1f;
     private float jumpBufferCounter;
@@ -56,6 +61,7 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale *= _fallMutliplier;
+        defaultGravity = rb.gravityScale;
 
         if (healthSlider == null)
         {
@@ -68,6 +74,15 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         knockbackTimer -= Time.deltaTime;
+        dashCooldownTimer -= Time.deltaTime;
+
+        if (isDashing)
+        {
+            dashTimer -= Time.deltaTime;
+            if (dashTimer <= 0f)
+                isDashing = false;
+        }
+
         playerGrounded = IsTouchingGround();
 
         horizontalInput = 0f;
@@ -165,6 +180,12 @@ public class PlayerMovement : MonoBehaviour
             transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
         }
 
+        // wasPressedThisFrame = samo enkrat ob pritisku (ne vsak frame, ko držiš tipko)
+        if (keyboard.shiftKey.wasPressedThisFrame && dashCooldownTimer <= 0f && !isDashing)
+        {
+            DoDash();
+        }
+
         if (keyboard.rKey.isPressed)
         {
             Restart();
@@ -190,11 +211,22 @@ public class PlayerMovement : MonoBehaviour
         wallJumpTimer = _wallJumpDuration;
     }
 
+    private void DoDash()
+    {
+        // Dash v smer, v katero lik gleda
+        float dashDir = Mathf.Sign(transform.localScale.x);
+
+        isDashing = true;
+        dashTimer = _dashDuration;
+        dashCooldownTimer = _dashDelay;
+        rb.linearVelocity = new Vector2(dashDir * _dashSpeed, 0f);
+    }
+
     void FixedUpdate()
     {
         if (rb != null)
         {
-            if (wallJumpTimer > 0f || knockbackTimer > 0f) return;
+            if (isDashing || wallJumpTimer > 0f || knockbackTimer > 0f) return;
 
             float yVelocity = rb.linearVelocity.y;
 
@@ -215,8 +247,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (other.collider.CompareTag("Enemy"))
         {
-            DoKnockBack(other.transform);
-            DamagePlayer(10);
+            TakeHit(other.transform.position, 10f);
         }
         else if (other.collider.CompareTag("Finish"))
         {
@@ -235,9 +266,16 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void DoKnockBack(Transform enemy)
+    // En vhod za vse zadetke: damage + knockback, ampak največ enkrat na _invincibilityDuration
+    public void TakeHit(Vector2 sourcePosition, float damage)
     {
-        float knockbackDir = Mathf.Sign(transform.position.x - enemy.position.x);
+        DamagePlayer(damage);
+        DoKnockBack(sourcePosition);
+    }
+
+    private void DoKnockBack(Vector2 sourcePosition)
+    {
+        float knockbackDir = Mathf.Sign(transform.position.x - sourcePosition.x);
 
         rb.linearVelocity = new Vector2(knockbackDir * knockbackPower.x, knockbackPower.y);
         knockbackTimer = _knockbackDuration;

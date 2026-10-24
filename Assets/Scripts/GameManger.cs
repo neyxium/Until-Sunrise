@@ -6,7 +6,6 @@ public class GameManger : MonoBehaviour
     public static GameManger Instance;
     [NonSerialized] public float nightLength = 60f;
     [NonSerialized] public float nightRemaining;
-
     [NonSerialized] public float elapseNight;
     private GameObject player;
 
