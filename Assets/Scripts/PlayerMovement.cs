@@ -302,6 +302,10 @@ public class PlayerMovement : MonoBehaviour
         {
             HandleFinishTrigger(other.gameObject);
         }
+        else if (other.collider.CompareTag("Death"))
+        {
+            Restart();
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)

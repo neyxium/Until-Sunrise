@@ -4,10 +4,10 @@ using System;
 public class GameManger : MonoBehaviour
 {
     public static GameManger Instance;
-    [NonSerialized] public float nightLength = 60f;
+    [NonSerialized] public float nightLength = 90f;
     [NonSerialized] public float nightRemaining;
     [NonSerialized] public float elapseNight;
-    private GameObject player;
+    public GameObject sun;
 
     void Awake()
     {
@@ -25,7 +25,6 @@ public class GameManger : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        player = FindAnyObjectByType<PlayerMovement>().gameObject;
         nightRemaining = nightLength;
     }
 
@@ -34,5 +33,19 @@ public class GameManger : MonoBehaviour
     {
         nightRemaining -= Time.deltaTime;
         elapseNight = 1f - Mathf.Clamp01(nightRemaining / nightLength);
+
+        if(elapseNight >= 0.5f)
+        {
+            //set sun spritrender component activ
+            if (sun != null)
+            {
+                SpriteRenderer sunSpriteRenderer = sun.GetComponent<SpriteRenderer>();
+                if (sunSpriteRenderer != null)
+                {
+                    sunSpriteRenderer.enabled = true;
+                }
+            }
+            
+        }
     }
 }
