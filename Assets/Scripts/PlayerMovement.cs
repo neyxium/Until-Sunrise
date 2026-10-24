@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Analytics;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
@@ -26,8 +27,8 @@ public class PlayerMovement : MonoBehaviour
     private bool playerWallSliding = false;
 
     // Layers
-    [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private LayerMask wallLayer;
+    [SerializeField] private LayerMask groundLayers;
+    [SerializeField] private LayerMask climbableLayers;
 
     // Raycasting
     const float _rayCastDist = 0.55f;
@@ -47,7 +48,7 @@ public class PlayerMovement : MonoBehaviour
     private float wallJumpTimer;
 
     // Knockback
-    private Vector2 knockbackPower = new Vector2(150f, 10f);
+    private Vector2 knockbackPower = new Vector2(15f, 10f);
     private const float _knockbackDuration = 0.2f;
     private float knockbackTimer;
 
@@ -100,16 +101,21 @@ public class PlayerMovement : MonoBehaviour
             transform.Translate(new Vector3(horizontalInput * _speed * Time.deltaTime, 0f, 0f));
         }
 
-        if(GameManger.Instance.elapseNight > 0.75f)
+        if (GameManger.Instance.elapseNight > 0.75f)
         {
             DamagePlayer(Time.deltaTime * (0.5f + GameManger.Instance.elapseNight) * 5);
+        }
+
+        if(playerHP <= 0f)
+        {
+            Restart();
         }
     }
 
     private bool IsTouchingGround()
     {
         Vector2 origin = (Vector2)transform.position + boxOffset;
-        RaycastHit2D hit = Physics2D.BoxCast(origin, boxSize, 0f, Vector2.down, _rayCastDist, groundLayer);
+        RaycastHit2D hit = Physics2D.BoxCast(origin, boxSize, 0f, Vector2.down, _rayCastDist, groundLayers);
         return hit.collider != null;
     }
 
@@ -120,10 +126,10 @@ public class PlayerMovement : MonoBehaviour
 
     private float WallDirection()
     {
-        if (Physics2D.Raycast(transform.position, Vector2.right, _rayCastDist, wallLayer).collider != null)
+        if (Physics2D.Raycast(transform.position, Vector2.right, _rayCastDist, climbableLayers).collider != null)
             return 1f;
 
-        if (Physics2D.Raycast(transform.position, Vector2.left, _rayCastDist, wallLayer).collider != null)
+        if (Physics2D.Raycast(transform.position, Vector2.left, _rayCastDist, climbableLayers).collider != null)
             return -1f;
 
         return 0f;
@@ -157,6 +163,11 @@ public class PlayerMovement : MonoBehaviour
         else if (horizontalInput < 0f)
         {
             transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+        }
+
+        if (keyboard.rKey.isPressed)
+        {
+            Restart();
         }
     }
 
@@ -207,6 +218,10 @@ public class PlayerMovement : MonoBehaviour
             DoKnockBack(other.transform);
             DamagePlayer(10);
         }
+        else if (other.collider.CompareTag("Finish"))
+        {
+            Debug.Log("win");
+        }
     }
 
     public void DamagePlayer(float damage = 1f)
@@ -242,6 +257,11 @@ public class PlayerMovement : MonoBehaviour
             healthSlider.maxValue = _maxHP;
             healthSlider.value = playerHP;
         }
+    }
+
+    private void Restart()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
     private void OnDrawGizmos()
     {
