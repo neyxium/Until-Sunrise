@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Unity.Cinemachine;
+using UnityEngine.Rendering.Universal;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -34,12 +36,14 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 boxOffset = new Vector2(0.11f, 0f);
 
     // Dash
-    private const float _dashSpeed = 20f;      // hitrost med dashem
-    private const float _dashDuration = 0.15f; // koliko časa traja dash (20 * 0.15 = 3 enote)
-    private const float _dashDelay = 2.5f;     // cooldown med dashi
+    private const float _dashSpeed = 20f;
+    private const float _dashDuration = 0.15f;
+    private const float _dashDelay = 2.5f;
     private float dashTimer;
     private float dashCooldownTimer;
     private bool isDashing = false;
+    public float DashCooldownRemaining => Mathf.Max(0f, dashCooldownTimer);
+    public bool IsDashReady => dashCooldownTimer <= 0f && !isDashing;
 
     // Jump Buffer
     private const float _jumpBufferTime = 0.1f;
@@ -58,12 +62,30 @@ public class PlayerMovement : MonoBehaviour
     private const float _knockbackDuration = 0.2f;
     private float knockbackTimer;
 
+    // Cinemachine Camera
+    [Header("Cinemachine Settings")]
+    [SerializeField] private bool autoSetupCinemachine = true;
+    [SerializeField] private Vector3 cameraDamping = new Vector3(0.5f, 0.7f, 0f);
+    [SerializeField] private float lookaheadTime = 0.15f;
+    [SerializeField] private float lookaheadSmoothing = 4f;
+    [SerializeField] private float cameraDistance = 10f;
+    [SerializeField] private float orthographicSize = 5f;
+
+    private void Awake()
+    {
+        if (autoSetupCinemachine)
+        {
+            SetupCinemachine();
+        }
+    }
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         rb.gravityScale *= _fallMutliplier;
         defaultGravity = rb.gravityScale;
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
         if (healthSlider == null)
         {
@@ -123,7 +145,7 @@ public class PlayerMovement : MonoBehaviour
             DamagePlayer(Time.deltaTime * (0.5f + GameManger.Instance.elapseNight) * 5);
         }
 
-        if(playerHP <= 0f)
+        if (playerHP <= 0f)
         {
             Restart();
         }
@@ -229,8 +251,11 @@ public class PlayerMovement : MonoBehaviour
 
     private void DoDash()
     {
-        // Dash v smer, v katero lik gleda
         float dashDir = Mathf.Sign(transform.localScale.x);
+
+        //rotate player 90 degrress in that direction and then rotate back
+        transform.Rotate(0f, 90f * dashDir, 0f);
+        Invoke("ResetRotation", 0.1f);
 
         isDashing = true;
         dashTimer = _dashDuration;
@@ -238,6 +263,13 @@ public class PlayerMovement : MonoBehaviour
         rb.linearVelocity = new Vector2(dashDir * _dashSpeed, 3f);
         UpdateAnimations();
     }
+
+    private void ResetRotation()
+    {
+        transform.rotation = Quaternion.identity;
+    }
+
+
 
     void FixedUpdate()
     {
@@ -268,7 +300,70 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (other.collider.CompareTag("Finish"))
         {
-            Debug.Log("win");
+            HandleFinishTrigger(other.gameObject);
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Finish"))
+        {
+            HandleFinishTrigger(other.gameObject);
+        }
+    }
+
+    private void HandleFinishTrigger(GameObject finishObj)
+    {
+        Debug.Log("win");
+        CoffinController coffin = finishObj.GetComponent<CoffinController>();
+        if (coffin == null)
+        {
+            coffin = finishObj.AddComponent<CoffinController>();
+        }
+        coffin.TryEnterCoffin(gameObject);
+    }
+
+    public void EnterCoffin(Vector3 coffinPosition)
+    {
+        isDashing = false;
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.simulated = false;
+        }
+
+        Collider2D col = GetComponent<Collider2D>();
+        if (col != null)
+        {
+            col.enabled = false;
+        }
+
+        transform.position = new Vector3(coffinPosition.x, coffinPosition.y, transform.position.z);
+        transform.localScale = Vector3.one;
+
+        if (anim != null)
+        {
+            anim.Play("PlayerIdle");
+            anim.SetBool("isWalking", false);
+            anim.SetBool("isJumping", false);
+            anim.SetBool("isDashing", false);
+        }
+
+        Light2D light2D = GetComponentInChildren<Light2D>();
+        if (light2D != null)
+        {
+            light2D.enabled = false;
+        }
+
+        enabled = false;
+    }
+
+    public void HidePlayerSprite()
+    {
+        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>();
+        foreach (var r in renderers)
+        {
+            r.enabled = false;
         }
     }
 
@@ -283,7 +378,6 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // En vhod za vse zadetke: damage + knockback, ampak največ enkrat na _invincibilityDuration
     public void TakeHit(Vector2 sourcePosition, float damage)
     {
         DamagePlayer(damage);
@@ -318,6 +412,62 @@ public class PlayerMovement : MonoBehaviour
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
+    private void SetupCinemachine()
+    {
+        Camera mainCam = Camera.main;
+        if (mainCam == null)
+        {
+            mainCam = FindAnyObjectByType<Camera>();
+        }
+
+        if (mainCam != null)
+        {
+            if (mainCam.transform.IsChildOf(transform))
+            {
+                mainCam.transform.SetParent(null);
+                mainCam.transform.localScale = Vector3.one;
+                mainCam.transform.rotation = Quaternion.identity;
+            }
+
+            if (!mainCam.TryGetComponent<CinemachineBrain>(out var brain))
+            {
+                brain = mainCam.gameObject.AddComponent<CinemachineBrain>();
+            }
+        }
+
+        CinemachineCamera vcam = FindAnyObjectByType<CinemachineCamera>();
+        if (vcam == null)
+        {
+            GameObject camGO = new GameObject("Cinemachine2DCamera");
+            camGO.transform.position = new Vector3(transform.position.x, transform.position.y, -cameraDistance);
+            vcam = camGO.AddComponent<CinemachineCamera>();
+        }
+
+        vcam.Target.TrackingTarget = transform;
+
+        if (mainCam != null)
+        {
+            var lens = LensSettings.FromCamera(mainCam);
+            lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
+            lens.OrthographicSize = orthographicSize > 0f ? orthographicSize : (mainCam.orthographicSize > 0f ? mainCam.orthographicSize : 5f);
+            vcam.Lens = lens;
+        }
+
+        if (!vcam.TryGetComponent<CinemachinePositionComposer>(out var composer))
+        {
+            composer = vcam.gameObject.AddComponent<CinemachinePositionComposer>();
+        }
+
+        composer.CameraDistance = cameraDistance;
+        composer.Damping = cameraDamping;
+        composer.Lookahead.Enabled = lookaheadTime > 0f;
+        composer.Lookahead.Time = lookaheadTime;
+        composer.Lookahead.Smoothing = lookaheadSmoothing;
+        composer.Lookahead.IgnoreY = true;
+        composer.Composition = ScreenComposerSettings.Default;
+        composer.CenterOnActivate = true;
+    }
+
     private void OnDrawGizmos()
     {
         Gizmos.color = playerGrounded ? Color.green : Color.red;

@@ -4,14 +4,32 @@ using TMPro;
 public class UI_Manager : MonoBehaviour
 {
     public TextMeshProUGUI clockText;
+    public TextMeshProUGUI dashText;
+    private PlayerMovement player;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        player = FindAnyObjectByType<PlayerMovement>();
 
+        if (dashText == null && clockText != null)
+        {
+            Transform existing = clockText.transform.parent.Find("DashStatus");
+            if (existing != null)
+            {
+                dashText = existing.GetComponent<TextMeshProUGUI>();
+            }
+            else
+            {
+                GameObject dashObj = Instantiate(clockText.gameObject, clockText.transform.parent);
+                dashObj.name = "DashStatus";
+                RectTransform rt = dashObj.GetComponent<RectTransform>();
+                rt.anchoredPosition = clockText.rectTransform.anchoredPosition + new Vector2(0f, -60f);
+                dashText = dashObj.GetComponent<TextMeshProUGUI>();
+                dashText.fontSize = 40f;
+            }
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (GameManger.Instance != null && clockText != null)
@@ -24,6 +42,25 @@ public class UI_Manager : MonoBehaviour
             int minutes = snappedMinutes % 60;
 
             clockText.SetText("{0}:{1:00} AM", hours, minutes);
+        }
+
+        if (player == null)
+        {
+            player = FindAnyObjectByType<PlayerMovement>();
+        }
+
+        if (player != null && dashText != null)
+        {
+            if (player.IsDashReady)
+            {
+                dashText.SetText("Dash: READY");
+                dashText.color = new Color(0.4f, 1f, 0.4f, 1f);
+            }
+            else
+            {
+                dashText.SetText("Dash: {0:0.0}s", player.DashCooldownRemaining);
+                dashText.color = new Color(1f, 0.6f, 0.2f, 1f);
+            }
         }
     }
 }
