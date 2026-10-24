@@ -1,16 +1,18 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class LightEnemy : MonoBehaviour
 {
-    [SerializeField] private Transform lightPivot;
-    [SerializeField] private SpriteRenderer lightSprite;
-
     [SerializeField] private float lightLength = 10f;
     [SerializeField] private float lightWidth = 2f;
 
     [SerializeField] private float speed = 0.5f;
     [SerializeField] private float angle = 45f;
+    [SerializeField] private LayerMask obstacleLayers;
+    [SerializeField] private Transform lightPivot;
+    [SerializeField] private Transform lightColliderTransform; // Sem povlečeš objekt Triangle (zaradi colliderja)
+    [SerializeField] private Light2D spotLight;                // Sem povlečeš objekt Light (Light 2D)
     private float startRotation = 0f;
 
     private Color normalColor = new Color(1f, 1f, 0.5f, 0.3f); // prosojno rumena
@@ -22,10 +24,9 @@ public class LightEnemy : MonoBehaviour
     void Start()
     {
         UpdateLightSize();
-        if (lightSprite != null)
-        {
-            lightSprite.color = normalColor;
-        }
+
+        if (spotLight != null)
+            spotLight.color = normalColor;
     }
 
     // Update is called once per frame
@@ -39,7 +40,12 @@ public class LightEnemy : MonoBehaviour
         }
         if (playerDetected && detectedPlayer != null)
         {
-            detectedPlayer.DamagePlayer(_damagePerSec * Time.deltaTime);
+            RaycastHit2D wallHit = Physics2D.Linecast(transform.position, detectedPlayer.transform.position, obstacleLayers);
+
+            if (wallHit.collider == null)
+            {
+                detectedPlayer.DamagePlayer(_damagePerSec * Time.deltaTime);
+            }
         }
     }
 
@@ -49,9 +55,6 @@ public class LightEnemy : MonoBehaviour
         {
             playerDetected = true;
             detectedPlayer = other.GetComponent<PlayerMovement>();
-
-            if (lightSprite != null)
-                lightSprite.color = alertColor;
         }
     }
 
@@ -61,9 +64,6 @@ public class LightEnemy : MonoBehaviour
         {
             playerDetected = false;
             detectedPlayer = null;
-
-            if (lightSprite != null)
-                lightSprite.color = normalColor;
         }
     }
 
@@ -74,10 +74,23 @@ public class LightEnemy : MonoBehaviour
 
     private void UpdateLightSize()
     {
-        if (lightSprite != null)
+        // 1. Povečamo nevidni Triangle collider
+        if (lightColliderTransform != null)
         {
-            lightSprite.transform.localScale = new Vector3(lightWidth, lightLength, 1f);
-            lightSprite.transform.localPosition = new Vector3(lightLength / 1.8f, 0f, 0f);
+            lightColliderTransform.localScale = new Vector3(lightWidth, lightLength, 1f);
+            lightColliderTransform.localPosition = new Vector3(lightLength / 1.8f, 0f, 0f);
+        }
+
+        // 2. Povečamo pravo 2D luč, da se ujema s trikotnikom
+        if (spotLight != null)
+        {
+            // Dolžina luči
+            spotLight.pointLightOuterRadius = lightLength * 0.85f;
+
+            // Iz širine in dolžine izračunamo točen kot snopa v stopinjah
+            float spotAngle = 2f * Mathf.Atan2(lightWidth * 0.5f, lightLength) * Mathf.Rad2Deg;
+            spotLight.pointLightOuterAngle = spotAngle;
+            spotLight.pointLightInnerAngle = spotAngle; // ali spotAngle * 0.8f za mehkejši rob
         }
     }
 }
