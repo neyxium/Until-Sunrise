@@ -16,6 +16,7 @@ public class PlayerMovement : MonoBehaviour
     private float defaultGravity;
     private Vector2 wallJumpPower = new Vector2(_jumpPower / 1.25f, _jumpPower);
     private Rigidbody2D rb;
+    private Animator anim;
     private float horizontalInput;
     [SerializeField] private Slider healthSlider;
 
@@ -60,6 +61,7 @@ public class PlayerMovement : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
         rb.gravityScale *= _fallMutliplier;
         defaultGravity = rb.gravityScale;
 
@@ -125,6 +127,20 @@ public class PlayerMovement : MonoBehaviour
         {
             Restart();
         }
+
+        UpdateAnimations();
+    }
+
+    private void UpdateAnimations()
+    {
+        if (anim == null || rb == null) return;
+
+        bool isWalking = Mathf.Abs(horizontalInput) > 0.1f && playerGrounded && !isDashing;
+        bool isJumping = !playerGrounded;
+
+        anim.SetBool("isWalking", isWalking);
+        anim.SetBool("isJumping", isJumping);
+        anim.SetBool("isDashing", isDashing);
     }
 
     private bool IsTouchingGround()
@@ -219,7 +235,8 @@ public class PlayerMovement : MonoBehaviour
         isDashing = true;
         dashTimer = _dashDuration;
         dashCooldownTimer = _dashDelay;
-        rb.linearVelocity = new Vector2(dashDir * _dashSpeed, 0f);
+        rb.linearVelocity = new Vector2(dashDir * _dashSpeed, 3f);
+        UpdateAnimations();
     }
 
     void FixedUpdate()

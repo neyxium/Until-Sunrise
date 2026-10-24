@@ -20,6 +20,7 @@ public class BaseEnemy : MonoBehaviour
     private bool isDashing = false;
 
     private Rigidbody2D rb;
+    private Animator anim;
     private float jumpTimer;
     private float startX;
     private int movingDirection = 1;
@@ -27,13 +28,10 @@ public class BaseEnemy : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
 
         startX = transform.position.x;
         ResetJumpTimer();
-
-
-
-
     }
 
     void Update()
@@ -48,6 +46,7 @@ public class BaseEnemy : MonoBehaviour
             {
                 isDashing = false;
             }
+            UpdateAnimations();
             return;
         }
 
@@ -58,6 +57,7 @@ public class BaseEnemy : MonoBehaviour
         }
 
         CheckPatrolBounds();
+        UpdateAnimations();
     }
 
     void FixedUpdate()
@@ -121,6 +121,19 @@ public class BaseEnemy : MonoBehaviour
 
         // Ohranimo trenutno vertikalno HITROST (prej je bila tu pomotoma pozicija Y)
         rb.linearVelocity = new Vector2(direction * _dashPower, rb.linearVelocity.y);
+        UpdateAnimations();
+    }
+
+    private void UpdateAnimations()
+    {
+        if (anim == null || rb == null) return;
+
+        bool isWalking = Mathf.Abs(rb.linearVelocity.x) > 0.1f && !isDashing;
+        bool isJumping = Mathf.Abs(rb.linearVelocity.y) > 0.01f;
+
+        anim.SetBool("isWalking", isWalking);
+        anim.SetBool("isJumping", isJumping);
+        anim.SetBool("isDashing", isDashing);
     }
 
     private void OnDrawGizmosSelected()

@@ -23,6 +23,9 @@ TextureImporter:
   - first:
       213: -1953384899899948232
     second: guy_2_6
+  - first:
+      213: 4542698786424498569
+    second: guy_2_7
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -69,7 +72,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -121,12 +124,12 @@ TextureImporter:
       name: guy_2_0
       rect:
         serializedVersion: 2
-        x: 4
-        y: 79
-        width: 28
-        height: 81
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 0
+        y: 120
+        width: 32
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -144,11 +147,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 32
-        y: 119
+        y: 120
         width: 32
-        height: 41
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -165,12 +168,12 @@ TextureImporter:
       name: guy_2_2
       rect:
         serializedVersion: 2
-        x: 36
-        y: 79
-        width: 28
-        height: 41
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 64
+        y: 120
+        width: 32
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -187,12 +190,12 @@ TextureImporter:
       name: guy_2_3
       rect:
         serializedVersion: 2
-        x: 68
-        y: 119
-        width: 28
-        height: 41
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 96
+        y: 120
+        width: 32
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -209,12 +212,12 @@ TextureImporter:
       name: guy_2_4
       rect:
         serializedVersion: 2
-        x: 101
-        y: 119
-        width: 27
-        height: 41
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 0
+        y: 80
+        width: 32
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -231,12 +234,12 @@ TextureImporter:
       name: guy_2_5
       rect:
         serializedVersion: 2
-        x: 0
-        y: 39
+        x: 32
+        y: 80
         width: 32
-        height: 41
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -253,12 +256,12 @@ TextureImporter:
       name: guy_2_6
       rect:
         serializedVersion: 2
-        x: 4
-        y: 0
-        width: 29
+        x: 0
+        y: 40
+        width: 32
         height: 40
-      alignment: 0
-      pivot: {x: 0, y: 0}
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -267,6 +270,28 @@ TextureImporter:
       bones: []
       spriteID: 8330ad378ce24e4e0800000000000000
       internalID: -1953384899899948232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guy_2_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 32
+        height: 40
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8892e6e5a78ea0f30800000000000001
+      internalID: 4542698786424498569
       vertices: []
       indices: 
       edges: []
@@ -283,7 +308,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":40.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":9,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       guy_2_0: -4384870891249012324
       guy_2_1: 7015738592409979464
@@ -292,6 +319,7 @@ TextureImporter:
       guy_2_4: -8737973457616529489
       guy_2_5: 51560463991173333
       guy_2_6: -1953384899899948232
+      guy_2_7: 4542698786424498569
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
