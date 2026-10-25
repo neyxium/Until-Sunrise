@@ -13,6 +13,8 @@ public class SunCycle : MonoBehaviour
     [SerializeField] private AnimationCurve dawnCurve = new AnimationCurve();
     void Update()
     {
+        if (GameManger.Instance.bFinished) return; // preneha izvajanje ob koncu
+        
         if (GameManger.Instance == null || sunLight == null || globalLight == null) return;
 
         float lightPercent = dawnCurve.Evaluate(GameManger.Instance.elapseNight);

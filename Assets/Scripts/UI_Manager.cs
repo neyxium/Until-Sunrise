@@ -32,6 +32,8 @@ public class UI_Manager : MonoBehaviour
 
     void Update()
     {
+        if (GameManger.Instance.bFinished) return; // neha izvajanje cikla ce player prek konca
+        
         if (GameManger.Instance != null && clockText != null)
         {
             float totalMinutes = GameManger.Instance.elapseNight * 480f;

@@ -9,6 +9,8 @@ public class GameManger : MonoBehaviour
     [NonSerialized] public float elapseNight;
     public GameObject sun;
 
+    public bool bFinished = false;
+
     void Awake()
     {
         if (Instance == null)

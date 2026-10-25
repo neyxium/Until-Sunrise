@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -70,6 +71,18 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float lookaheadSmoothing = 4f;
     [SerializeField] private float cameraDistance = 10f;
     [SerializeField] private float orthographicSize = 5f;
+    
+    // menu gltich
+    [SerializeField] private GameObject menu;
+    private Vector3 camWorldTransform;
+    private bool bIsMenuActive = false;
+    [SerializeField] private GameObject playerCamera;
+    
+    //vcam
+    private CinemachineCamera vcam;
+    
+    // ending
+    [SerializeField] private float fWaitTimeBeforeGameReset = 3f;
 
     private void Awake()
     {
@@ -105,6 +118,11 @@ public class PlayerMovement : MonoBehaviour
             dashTimer -= Time.deltaTime;
             if (dashTimer <= 0f)
                 isDashing = false;
+        }
+
+        if (transform.position.y <= -10)
+        {
+            Restart();
         }
 
         playerGrounded = IsTouchingGround();
@@ -151,6 +169,11 @@ public class PlayerMovement : MonoBehaviour
         }
 
         UpdateAnimations();
+
+        if (playerCamera != null && bIsMenuActive)
+        {
+            playerCamera.transform.position = camWorldTransform;
+        } 
     }
 
     private void UpdateAnimations()
@@ -188,6 +211,29 @@ public class PlayerMovement : MonoBehaviour
         return 0f;
     }
 
+    private bool IsPlayerInMiddleOfScreen()
+    {
+        Camera cam = playerCamera.GetComponent<Camera>();
+        if (cam != null)
+        {
+            float viewportX = cam.WorldToViewportPoint(transform.position).x;
+            return viewportX <= 0.58f && viewportX >= 0.42f;
+        }
+
+        return false;
+    }
+
+    private void SetPlayerPosBasedOnScreen(float finalX)
+    {
+        Camera cam = playerCamera.GetComponent<Camera>();
+        
+        if (cam != null)
+        {
+            float worldX = cam.ViewportToWorldPoint(new Vector2(finalX, 0)).x;
+            transform.position = new Vector3(worldX, transform.position.y, transform.position.z);
+        }
+    }
+
     private void PlayerInput()
     {
         Keyboard keyboard = Keyboard.current;
@@ -195,10 +241,22 @@ public class PlayerMovement : MonoBehaviour
         if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
         {
             horizontalInput -= 1f;
+
+            if (bIsMenuActive && IsPlayerInMiddleOfScreen())
+            {
+                Debug.Log("IsInMiddleOfScreen");
+                SetPlayerPosBasedOnScreen(0.4f);
+            }
         }
         else if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
         {
             horizontalInput += 1f;
+            
+            if (bIsMenuActive && IsPlayerInMiddleOfScreen())
+            {
+                Debug.Log("IsInMiddleOfScreen");
+                SetPlayerPosBasedOnScreen(0.6f);
+            }
         }
 
         if (keyboard.spaceKey.isPressed)
@@ -227,6 +285,25 @@ public class PlayerMovement : MonoBehaviour
         if (keyboard.rKey.isPressed)
         {
             Restart();
+        }
+
+        if (keyboard.escapeKey.wasPressedThisFrame)
+        {
+            // dobisi
+
+            if (menu.activeInHierarchy)
+            {
+                menu.SetActive(false);
+                bIsMenuActive = false;
+                vcam.Target.TrackingTarget = transform;
+            }
+            else
+            {
+                menu.SetActive(true);
+                bIsMenuActive = true;
+                camWorldTransform = playerCamera.transform.position;
+                vcam.Target.TrackingTarget = null;
+            }
         }
     }
 
@@ -318,6 +395,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleFinishTrigger(GameObject finishObj)
     {
+        GameManger.Instance.bFinished = true;
+        
         Debug.Log("win");
         CoffinController coffin = finishObj.GetComponent<CoffinController>();
         if (coffin == null)
@@ -369,6 +448,17 @@ public class PlayerMovement : MonoBehaviour
         {
             r.enabled = false;
         }
+    }
+
+    public void SetRestartGameCoRout()
+    {
+        StartCoroutine(RestartGameCo());
+    }
+
+    IEnumerator RestartGameCo()
+    {
+        yield return new WaitForSeconds(fWaitTimeBeforeGameReset);
+        Restart();
     }
 
     public void DamagePlayer(float damage = 1f)
@@ -439,7 +529,7 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        CinemachineCamera vcam = FindAnyObjectByType<CinemachineCamera>();
+        vcam = FindAnyObjectByType<CinemachineCamera>();
         if (vcam == null)
         {
             GameObject camGO = new GameObject("Cinemachine2DCamera");

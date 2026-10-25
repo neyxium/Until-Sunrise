@@ -121,6 +121,11 @@ public class CoffinController : MonoBehaviour
         {
             Debug.Log("GG EZ");
         }
+
+        if (playerMovement != null)
+        {
+            playerMovement.SetRestartGameCoRout();
+        }
     }
 
     private IEnumerator CinematicCameraZoom(float delay, float duration)
