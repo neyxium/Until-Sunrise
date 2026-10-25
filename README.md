@@ -24,7 +24,7 @@
 ## ZAGON
 
 ### Navodila po korakih za zagon na Windows:
-1. Prenesite paket igre `[Until_Sunrise.zip]` ali odprite repozitorij na povezavi.
+1. Prenesite paket igre `[Until_Sunrise.zip]` ali odprite repozitorij na [povezavi](https://github.com/neyxium/Until-Sunrise/releases/tag/GameJam).
 2. Razširite (*Extract*) datoteko `.zip` v poljubno mapo na računalniku.
 3. Odprite mapo in zaženite datoteko `[Until Sunrise.exe]`.
 
